@@ -1,0 +1,35 @@
+name: Correção Automática
+
+on:
+  pull_request:
+    paths:
+      - "respostas/**" # Só roda se mexerem na pasta respostas
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  validate-and-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Rodar Testes (Vitest)
+        run: npm test
+
+      - name: Auto Merge (Se passar nos testes)
+        if: success() # Só executa se o passo anterior (testes) funcionou
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} --merge --auto --subject "Atividade Aprovada e Corrigida Automaticamente ✅"
